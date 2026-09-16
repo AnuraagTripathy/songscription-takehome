@@ -356,12 +356,14 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                   <article key={current.id} className="lay-down sheet sheet-raised relative">
                     {/* Same corner every other card in the book uses: saving a
                         piece is not one of the three things you came here to do,
-                        and it was sitting in the middle of the row that is. */}
+                        and it was sitting in the middle of the row that is.
+                        Inset to the card's own padding, not its edge, so its
+                        right edge lines up with the buttons underneath it. */}
                     <FavouriteButton
                       favourite={current.is_favourite}
                       title={current.title}
                       onToggle={() => favourite(current)}
-                      className="absolute right-3 top-3 z-10 md:right-4 md:top-4"
+                      className="absolute right-4 top-4 z-10 md:right-8 md:top-5"
                     />
                     <div className="flex flex-wrap items-end gap-x-8 gap-y-4 px-4 pb-4 pt-5 md:gap-y-5 md:px-8 md:pb-5 md:pt-6">
                       <div className="min-w-0 flex-1">
