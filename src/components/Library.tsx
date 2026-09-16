@@ -279,6 +279,9 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
           onClose={() => setOpenId(null)}
           onPatch={(changes) => patch(open, changes)}
           onDelete={() => remove(open)}
+          onPractise={() => practise(open)}
+          practising={practisingId === open.id}
+          logged={loggedId === open.id}
         />
       )}
 
@@ -351,6 +354,15 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                       />
                     )}
                   <article key={current.id} className="lay-down sheet sheet-raised relative">
+                    {/* Same corner every other card in the book uses: saving a
+                        piece is not one of the three things you came here to do,
+                        and it was sitting in the middle of the row that is. */}
+                    <FavouriteButton
+                      favourite={current.is_favourite}
+                      title={current.title}
+                      onToggle={() => favourite(current)}
+                      className="absolute right-3 top-3 z-10 md:right-4 md:top-4"
+                    />
                     <div className="flex flex-wrap items-end gap-x-8 gap-y-4 px-4 pb-4 pt-5 md:gap-y-5 md:px-8 md:pb-5 md:pt-6">
                       <div className="min-w-0 flex-1">
                         {/* The page at the top is whichever piece is still on
@@ -408,6 +420,10 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                           screen they overflow rather than shrink — the tertiary
                           one ran off the edge. Practise takes a line of its own
                           below md and the other three share the next. */}
+                      {/* Two heights, not four. Practise leads at 60px; the two
+                          that follow it both sit at 48, so the row reads as one
+                          primary and two seconds rather than four loose objects.
+                          The bookmark left entirely — see the card corner. */}
                       <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap md:gap-3">
                         <PractiseButton
                           title={current.title}
@@ -417,16 +433,11 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                           size="large"
                           className="basis-full md:basis-auto"
                         />
-                        <FavouriteButton
-                          favourite={current.is_favourite}
-                          title={current.title}
-                          onToggle={() => favourite(current)}
-                          className="shrink-0"
-                        />
                         <PlayButton
                           id={current.id}
                           fileUrl={fileUrl(current)}
                           title={current.title}
+                          size="large"
                           className="min-w-0 flex-1 md:flex-none"
                         />
                         <RevealButton

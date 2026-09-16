@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Pencil, Trash2, X } from "lucide-react";
 import { Keyboard } from "./Keyboard";
 import { Roll, clock } from "./Roll";
-import { FavouriteButton, LevelMarks, Meter, PlayControl, usePlayback } from "./kit";
+import { FavouriteButton, LevelMarks, Meter, PlayControl, PractiseButton, usePlayback } from "./kit";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,16 +47,22 @@ export function SongSheet({
   onClose,
   onPatch,
   onDelete,
+  onPractise,
+  practising = false,
+  logged = false,
 }: {
   piece: Piece;
   onClose: () => void;
   onPatch: (patch: Partial<Piece>) => void | Promise<void>;
   onDelete: () => void | Promise<void>;
+  /** Shared with every other surface, so a session is logged the same way. */
+  onPractise: () => void | Promise<void>;
+  practising?: boolean;
+  logged?: boolean;
 }) {
   const sheet = useRef<HTMLDivElement>(null);
   const [confirming, setConfirming] = useState(false);
   const [renaming, setRenaming] = useState(false);
-  const [marking, setMarking] = useState<"idle" | "working" | "done">("idle");
   const [removing, setRemoving] = useState(false);
   const [noteSaved, setNoteSaved] = useState(false);
 
@@ -208,7 +214,14 @@ export function SongSheet({
             )}
           </div>
 
-          <div className="order-2 shrink-0 md:order-3">
+          {/* The bookmark travels with the close button rather than sitting
+              between the two things you opened this page to do. */}
+          <div className="order-2 flex shrink-0 items-center gap-1 md:order-3">
+            <FavouriteButton
+              favourite={piece.is_favourite}
+              title={piece.title}
+              onToggle={() => onPatch({ is_favourite: !piece.is_favourite })}
+            />
             <DialogClose asChild>
               <Button variant="quiet" size="icon" aria-label="Close and go back to your songs">
                 <X />
@@ -216,12 +229,14 @@ export function SongSheet({
             </DialogClose>
           </div>
 
-          <div className="order-3 flex w-full items-center gap-2 md:order-2 md:w-auto">
-            <FavouriteButton
-              favourite={piece.is_favourite}
+          <div className="order-3 flex w-full flex-wrap items-center gap-2 md:order-2 md:w-auto md:flex-nowrap">
+            <PractiseButton
               title={piece.title}
-              onToggle={() => onPatch({ is_favourite: !piece.is_favourite })}
-              className="shrink-0"
+              onPractise={onPractise}
+              busy={practising}
+              done={logged}
+              size="large"
+              className="basis-full md:basis-auto"
             />
             <PlayControl
               state={playback.state}
@@ -431,26 +446,6 @@ export function SongSheet({
             </>
           ) : (
             <>
-              <Button
-                variant="paper"
-                busy={marking === "working"}
-                done={marking === "done"}
-                onClick={async () => {
-                  setMarking("working");
-                  try {
-                    await onPatch({
-                      last_practiced_at: new Date().toISOString(),
-                      in_progress: true,
-                    });
-                    setMarking("done");
-                    window.setTimeout(() => setMarking("idle"), 1800);
-                  } catch {
-                    setMarking("idle");
-                  }
-                }}
-              >
-                {marking === "done" ? "Started" : "Practise this"}
-              </Button>
               <p className="text-[13px] text-graphite-soft">
                 {lastPlayedLine(piece.last_practiced_at)}
                 {piece.session_count > 0 &&
