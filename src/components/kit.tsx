@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Check, Loader2, Piano, Play, Square, Star } from "lucide-react";
 import { FrameButton } from "@/components/ui/frame-button";
+import { cn } from "@/lib/utils";
 import {
   play as audioPlay,
   stop as audioStop,
@@ -118,11 +119,13 @@ export function FavouriteButton({
           setBusy(false);
         }
       }}
-      className={`group/fav inline-flex h-9 w-9 items-center justify-center rounded-[5px] border transition-[background-color,border-color,transform,opacity] duration-150 active:translate-y-px disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kraft-deep ${
+      className={cn(
+        "group/fav inline-flex h-9 w-9 items-center justify-center rounded-[5px] border transition-[background-color,border-color,transform,opacity] duration-150 active:translate-y-px disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kraft-deep",
         favourite
           ? "border-kraft-deep/45 bg-kraft/35 text-kraft-deep hover:bg-kraft/55"
-          : "border-transparent text-graphite-soft hover:border-rule hover:bg-paper-warm hover:text-kraft-deep"
-      } ${className}`}
+          : "border-transparent text-graphite-soft hover:border-rule hover:bg-paper-warm hover:text-kraft-deep",
+        className,
+      )}
     >
       <Star
         className={`h-[19px] w-[19px] transition-transform duration-200 group-hover/fav:scale-110 group-active/fav:scale-95 ${

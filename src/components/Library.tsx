@@ -354,17 +354,6 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                       />
                     )}
                   <article key={current.id} className="lay-down sheet sheet-raised relative">
-                    {/* Same corner every other card in the book uses: saving a
-                        piece is not one of the three things you came here to do,
-                        and it was sitting in the middle of the row that is.
-                        Inset to the card's own padding, not its edge, so its
-                        right edge lines up with the buttons underneath it. */}
-                    <FavouriteButton
-                      favourite={current.is_favourite}
-                      title={current.title}
-                      onToggle={() => favourite(current)}
-                      className="absolute right-4 top-4 z-10 md:right-8 md:top-5"
-                    />
                     <div className="flex flex-wrap items-end gap-x-8 gap-y-4 px-4 pb-4 pt-5 md:gap-y-5 md:px-8 md:pb-5 md:pt-6">
                       <div className="min-w-0 flex-1">
                         {/* The page at the top is whichever piece is still on
@@ -440,6 +429,10 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                           size="hero"
                           className="w-full"
                         />
+                        {/* The bookmark ends this row rather than floating in
+                            the card's corner, where it answered to nothing: same
+                            height as its neighbours, same baseline, and the
+                            column's right edge for free. */}
                         <div className="flex items-center gap-2">
                           <PlayButton
                             id={current.id}
@@ -455,6 +448,12 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                           >
                             See how to start
                           </RevealButton>
+                          <FavouriteButton
+                            favourite={current.is_favourite}
+                            title={current.title}
+                            onToggle={() => favourite(current)}
+                            className="h-11 w-11 shrink-0 border-rule bg-paper"
+                          />
                         </div>
                       </div>
                     </div>

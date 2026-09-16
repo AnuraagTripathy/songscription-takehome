@@ -48,22 +48,34 @@ the learner has to take on trust.
 
 ![A song](screenshots/03-song.png)
 
+**Practise is the biggest button on every surface.** The catalogue exists to get you playing, so it
+takes the one warm colour and the largest size — on the desk card, every grid card, every row, every
+suggestion, and the song page. Hearing a piece is how you judge it, so play steps down to paper
+beside it. Pressing practise logs the session and puts the piece on the desk, because that's how
+something becomes what you're working on.
+
+**The desk holds more than one song.** People learn two at once. The sheets underneath show at the
+edge and you thumb through them with the arrows or the ← → keys. Finish the last one and the card
+says to choose another, rather than leaving a hole where the biggest thing on the page was.
+
 **Every thumbnail is the song's own notes.** Not an icon, not a waveform. Time across, pitch up,
 right hand red and left hand black. It's the only thing that makes a long catalogue scannable
 without reading titles.
 
 **For "I don't know what to play", three picks that say why.** *Left the longest* / *Never started*
 / *If you only have a few minutes.* A recommendation score would have been easier, but you can't
-argue with a score. Each pick prints the fact that chose it, and a slot with nothing to put in it is
-dropped rather than filled with a wrong reason.
+argue with a score. Each pick prints the fact that chose it. Each slot needs a particular kind of
+song to exist, though — once everything has been played, *never started* has nothing to offer — so
+there are reserves behind them, the first of which hands you back your own note about the piece.
 
 **Controls appear when they're needed.** Empty: one line and a drop zone, no search box. Under 8
 songs: no filters. Under 4: no suggestions. Four ways to narrow three songs is noise.
 
 ![Empty](screenshots/05-empty.png)
 
-**48 cards, then "show more".** Drawing all 300 made typing lag about 400ms, because each card is
-real note data. Virtualising is the better fix; capping is what fit in the time.
+**48 cards, then "show more".** Each card is real note data, so drawing all 300 was 41,000 SVG
+rects and 6.6MB of HTML; capped it's 6,800 and 1.3MB. Virtualising is the better fix; capping is what
+fit in the time.
 
 **No settings page.** That's where you put decisions you couldn't make. Renaming, composer,
 favourite and your notes live on the song itself. The cards/list toggle is remembered. Sort and
