@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LayoutGrid, Rows3, Search, Star, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, LayoutGrid, Rows3, Search, Star, X } from "lucide-react";
 import { FavouriteButton, LevelMarks, PlayButton } from "./kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,6 +91,31 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
   const open = pieces.find((p) => p.id === openId) ?? null;
   const search = useRef<HTMLInputElement>(null);
 
+  // Everything you have put on the desk, most recently touched first. More than
+  // one is normal — people learn two pieces at once — and the page used to show
+  // the top sheet as though it were the only one.
+  const onTheDesk = useMemo(
+    () => pieces.filter((p) => p.in_progress).sort((a, b) => when(b) - when(a)),
+    [pieces],
+  );
+  // Which sheet of the stack is face up. Clamped on read rather than corrected
+  // in an effect, so finishing the last piece on the desk cannot leave the
+  // index pointing past the end for a frame.
+  const [deskIndex, setDeskIndex] = useState(0);
+  const deskPos = Math.min(deskIndex, Math.max(0, onTheDesk.length - 1));
+  const current = onTheDesk[deskPos] ?? null;
+
+  const flip = useCallback(
+    (delta: number) =>
+      setDeskIndex((i) => {
+        const n = onTheDesk.length;
+        if (n < 2) return 0;
+        const from = Math.min(i, n - 1);
+        return (from + delta + n) % n;
+      }),
+    [onTheDesk.length],
+  );
+
   // Ctrl/Cmd+F and "/" go to the search box. Finding a song is what "find"
   // means on this page, so taking the shortcut is the honest thing to do.
   useEffect(() => {
@@ -102,6 +127,17 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
           e.target.isContentEditable);
       const findKey = (e.key === "f" || e.key === "F") && (e.metaKey || e.ctrlKey);
       const slash = e.key === "/" && !e.metaKey && !e.ctrlKey && !typing;
+
+      // Left and right walk the desk, the way you would thumb a stack of cards.
+      // Only when there is a stack, only when nothing is open over the page,
+      // and never while someone is typing into a field.
+      const arrow = (e.key === "ArrowLeft" || e.key === "ArrowRight") && !typing;
+      if (arrow && !openId && onTheDesk.length > 1) {
+        e.preventDefault();
+        flip(e.key === "ArrowRight" ? 1 : -1);
+        return;
+      }
+
       if (!findKey && !slash) return;
       if (openId) return;
       e.preventDefault();
@@ -110,16 +146,7 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openId]);
-
-  // Everything you have put on the desk, most recently touched first. More than
-  // one is normal — people learn two pieces at once — and the page used to show
-  // the top sheet as though it were the only one.
-  const onTheDesk = useMemo(
-    () => pieces.filter((p) => p.in_progress).sort((a, b) => when(b) - when(a)),
-    [pieces],
-  );
-  const current = onTheDesk[0] ?? null;
+  }, [openId, flip, onTheDesk.length]);
 
   // Below four songs the whole book fits on one screen, and a shelf pointing at
   // three of them is just the same grid twice. It also stands down while you
@@ -292,24 +319,49 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                         className="sheet absolute inset-x-3 -bottom-[8px] top-4 rounded-[3px]"
                       />
                     )}
-                  <article className="lay-down sheet sheet-raised relative">
+                  <article key={current.id} className="lay-down sheet sheet-raised relative">
                     <div className="flex flex-wrap items-end gap-x-8 gap-y-4 px-4 pb-4 pt-5 md:gap-y-5 md:px-8 md:pb-5 md:pt-6">
                       <div className="min-w-0 flex-1">
                         {/* The page at the top is whichever piece is still on
                             the desk, which for a file just added is one nobody
                             has played yet — so the label has to be true before
                             there is anything to return to. */}
-                        <p className="mb-2 text-[12.5px] font-semibold uppercase tracking-[0.11em] text-graphite-soft">
-                          {current.last_practiced_at
-                            ? "Pick up where you left off"
-                            : "The one you are starting"}
+                        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <p className="text-[12.5px] font-semibold uppercase tracking-[0.11em] text-graphite-soft">
+                            {current.last_practiced_at
+                              ? "Pick up where you left off"
+                              : "The one you are starting"}
+                            {onTheDesk.length > 1 && (
+                              <span>
+                                {"  ·  "}
+                                {deskPos + 1} of {onTheDesk.length} on the desk
+                              </span>
+                            )}
+                          </p>
                           {onTheDesk.length > 1 && (
-                            <span className="text-graphite-soft">
-                              {"  ·  "}
-                              {onTheDesk.length} on the desk
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => flip(-1)}
+                                aria-label="The sheet before this one"
+                                className="flex h-7 w-7 items-center justify-center rounded-[3px] border border-rule text-graphite-soft transition-colors hover:bg-paper-warm hover:text-graphite active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-kraft-deep"
+                              >
+                                <ChevronLeft className="h-4 w-4" strokeWidth={2} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => flip(1)}
+                                aria-label="The next sheet on the desk"
+                                className="flex h-7 w-7 items-center justify-center rounded-[3px] border border-rule text-graphite-soft transition-colors hover:bg-paper-warm hover:text-graphite active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-kraft-deep"
+                              >
+                                <ChevronRight className="h-4 w-4" strokeWidth={2} />
+                              </button>
+                              <kbd className="ml-1 hidden rounded-[3px] border border-rule px-1.5 py-px text-[11px] font-medium text-graphite-soft sm:block">
+                                ← →
+                              </kbd>
+                            </div>
                           )}
-                        </p>
+                        </div>
                         <h2 className="font-book text-[clamp(1.9rem,4.4vw,3rem)] font-medium leading-[1.06] tracking-[-0.022em] text-graphite">
                           {current.title}
                         </h2>
