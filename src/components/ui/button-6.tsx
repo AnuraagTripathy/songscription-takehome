@@ -18,17 +18,21 @@ import { cn } from "@/lib/utils";
 export function RevealButton({
   children,
   reveal,
+  compact = false,
   className,
   ...props
 }: {
   children: React.ReactNode;
   reveal: React.ReactNode;
+  /** Shorter, for where this is the third thing on a card rather than the second. */
+  compact?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const h = compact ? "h-11" : "h-12";
   return (
     <button
       className={cn(
-        "group relative inline-flex h-12 items-center justify-center overflow-hidden",
-        "rounded-[5px] border border-board-deep bg-board font-label text-[14px] font-semibold",
+        `group relative inline-flex ${h} items-center justify-center overflow-hidden`,
+        `rounded-[5px] border border-board-deep bg-board font-label ${compact ? "text-[13px]" : "text-[14px]"} font-semibold`,
         "shadow-lift transition-[box-shadow,transform] duration-150 active:translate-y-px",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
         "focus-visible:outline-kraft-deep",
@@ -36,10 +40,10 @@ export function RevealButton({
       )}
       {...props}
     >
-      <span className="inline-flex h-12 translate-y-0 items-center justify-center whitespace-nowrap px-5 text-paper transition-transform duration-500 group-hover:-translate-y-[150%] md:px-6">
+      <span className={`inline-flex ${h} translate-y-0 items-center justify-center whitespace-nowrap ${compact ? "px-4" : "px-5 md:px-6"} text-paper transition-transform duration-500 group-hover:-translate-y-[150%]`}>
         {children}
       </span>
-      <span className="absolute inline-flex h-12 w-full translate-y-full items-center justify-center whitespace-nowrap px-5 text-graphite transition-transform duration-500 group-hover:translate-y-0 md:px-6">
+      <span className={`absolute inline-flex ${h} w-full translate-y-full items-center justify-center whitespace-nowrap ${compact ? "px-4" : "px-5 md:px-6"} text-graphite transition-transform duration-500 group-hover:translate-y-0`}>
         <span className="absolute h-full w-full translate-y-full skew-y-12 scale-y-0 bg-kraft transition-transform duration-500 group-hover:translate-y-0 group-hover:scale-150" />
         <span className="relative z-10 whitespace-nowrap">{reveal}</span>
       </span>

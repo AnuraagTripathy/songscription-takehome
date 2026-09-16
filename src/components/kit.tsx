@@ -232,19 +232,21 @@ export function PractiseButton({
   onPractise: () => void | Promise<void>;
   busy?: boolean;
   done?: boolean;
-  size?: "small" | "large";
+  /** `hero` is the desk card, where this is the largest thing on the page. */
+  size?: "small" | "large" | "hero";
   compact?: boolean;
   className?: string;
 }) {
-  const large = size === "large";
+  const hero = size === "hero";
+  const large = hero || size === "large";
 
   return (
     <FrameButton
       type="button"
       variant="clay"
-      size={large ? 17 : 13}
-      offset={large ? 7 : 5}
-      className={`${large ? "h-[60px] px-7 text-[16px]" : "h-11 text-[13px]"} ${
+      size={hero ? 19 : large ? 17 : 13}
+      offset={hero ? 8 : large ? 7 : 5}
+      className={`${hero ? "h-[72px] px-8 text-[18px] tracking-[0.06em]" : large ? "h-[60px] px-7 text-[16px]" : "h-11 text-[13px]"} ${
         large ? "" : compact ? "px-3 sm:px-4" : "px-4"
       } gap-2.5 ${className}`}
       aria-label={done ? `Practice logged for ${title}` : `Practise ${title}`}
@@ -257,11 +259,11 @@ export function PractiseButton({
       }}
     >
       {busy ? (
-        <Loader2 className={large ? "h-[19px] w-[19px] animate-spin" : "h-4 w-4 animate-spin"} />
+        <Loader2 className={large ? "h-[21px] w-[21px] animate-spin" : "h-4 w-4 animate-spin"} />
       ) : done ? (
-        <Check className={large ? "h-[19px] w-[19px]" : "h-4 w-4"} strokeWidth={2.25} />
+        <Check className={large ? "h-[21px] w-[21px]" : "h-4 w-4"} strokeWidth={2.25} />
       ) : (
-        <Piano className={large ? "h-[19px] w-[19px]" : "h-4 w-4"} strokeWidth={1.9} />
+        <Piano className={large ? "h-[21px] w-[21px]" : "h-4 w-4"} strokeWidth={1.9} />
       )}
       <span className={compact ? "sr-only sm:not-sr-only" : undefined}>
         {done ? "Logged" : "Practise"}

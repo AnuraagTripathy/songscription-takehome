@@ -424,29 +424,36 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                           that follow it both sit at 48, so the row reads as one
                           primary and two seconds rather than four loose objects.
                           The bookmark left entirely — see the card corner. */}
-                      <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap md:gap-3">
+                      {/* Stacked rather than strung out in a line: the act the
+                          catalogue exists for sits above the two that support
+                          it, at nearly twice their height, so the hierarchy is
+                          the first thing the eye gets rather than something it
+                          has to work out from colour. */}
+                      <div className="flex w-full flex-col items-stretch gap-2 md:w-[21rem]">
                         <PractiseButton
                           title={current.title}
                           onPractise={() => practise(current)}
                           busy={practisingId === current.id}
                           done={loggedId === current.id}
-                          size="large"
-                          className="basis-full md:basis-auto"
+                          size="hero"
+                          className="w-full"
                         />
-                        <PlayButton
-                          id={current.id}
-                          fileUrl={fileUrl(current)}
-                          title={current.title}
-                          size="large"
-                          className="min-w-0 flex-1 md:flex-none"
-                        />
-                        <RevealButton
-                          reveal="Open the page"
-                          onClick={() => setOpenId(current.id)}
-                          className="min-w-0 flex-1 md:flex-none"
-                        >
-                          See how to start
-                        </RevealButton>
+                        <div className="flex items-center gap-2">
+                          <PlayButton
+                            id={current.id}
+                            fileUrl={fileUrl(current)}
+                            title={current.title}
+                            className="min-w-0 flex-1"
+                          />
+                          <RevealButton
+                            reveal="Open the page"
+                            compact
+                            onClick={() => setOpenId(current.id)}
+                            className="min-w-0 flex-1"
+                          >
+                            See how to start
+                          </RevealButton>
+                        </div>
                       </div>
                     </div>
 
