@@ -2,7 +2,7 @@
 
 import { StickyNote } from "lucide-react";
 import { PitchMap } from "./PitchMap";
-import { FavouriteButton, LevelMarks, PlayButton } from "./kit";
+import { FavouriteButton, LevelMarks, PlayButton, PractiseButton } from "./kit";
 import {
   durationRough,
   fileUrl,
@@ -48,11 +48,17 @@ export function SongCard({
   piece,
   onOpen,
   onFavourite,
+  onPractise,
+  practising = false,
+  logged = false,
   index = 0,
 }: {
   piece: Piece;
   onOpen: (piece: Piece) => void;
   onFavourite: (piece: Piece) => void;
+  onPractise: (piece: Piece) => void;
+  practising?: boolean;
+  logged?: boolean;
   index?: number;
 }) {
   return (
@@ -114,8 +120,14 @@ export function SongCard({
           <LevelMarks level={piece.difficulty} />
           <Summary piece={piece} />
         </p>
-        <div className="mt-3 flex items-center gap-3">
-          <PlayButton id={piece.id} fileUrl={fileUrl(piece)} title={piece.title} />
+        <div className="mt-3 flex items-center gap-2">
+          <PractiseButton
+            title={piece.title}
+            onPractise={() => onPractise(piece)}
+            busy={practising}
+            done={logged}
+          />
+          <PlayButton id={piece.id} fileUrl={fileUrl(piece)} title={piece.title} iconOnly />
           <span className="flex min-w-0 flex-1 items-center justify-end gap-1.5 text-[13px] text-graphite-soft">
             {/* A note you left is a reason to come back to this one, so it is
                 worth a mark on the card rather than only inside it. */}
@@ -147,11 +159,17 @@ export function SongRow({
   piece,
   onOpen,
   onFavourite,
+  onPractise,
+  practising = false,
+  logged = false,
   index = 0,
 }: {
   piece: Piece;
   onOpen: (piece: Piece) => void;
   onFavourite: (piece: Piece) => void;
+  onPractise: (piece: Piece) => void;
+  practising?: boolean;
+  logged?: boolean;
   index?: number;
 }) {
   return (
@@ -212,6 +230,14 @@ export function SongRow({
         id={piece.id}
         fileUrl={fileUrl(piece)}
         title={piece.title}
+        compact
+        className="shrink-0"
+      />
+      <PractiseButton
+        title={piece.title}
+        onPractise={() => onPractise(piece)}
+        busy={practising}
+        done={logged}
         compact
         className="shrink-0"
       />

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Play, Square, Star } from "lucide-react";
+import { Check, Loader2, Piano, Play, Square, Star } from "lucide-react";
 import { FrameButton } from "@/components/ui/frame-button";
 import {
   play as audioPlay,
@@ -210,12 +210,73 @@ export function usePlayback(id: string, fileUrl: string) {
 }
 
 /** The key itself, told what to show. */
+
+/**
+ * The act the whole catalogue exists to lead to.
+ *
+ * It takes the clay key and the biggest size on every surface it appears on,
+ * and playback steps down to paper beside it. Hearing a piece is how you judge
+ * it; sitting down and practising it is the point, and the page should not make
+ * you hunt for the verb it is named after.
+ */
+export function PractiseButton({
+  title,
+  onPractise,
+  busy = false,
+  done = false,
+  size = "small",
+  compact = false,
+  className = "",
+}: {
+  title: string;
+  onPractise: () => void | Promise<void>;
+  busy?: boolean;
+  done?: boolean;
+  size?: "small" | "large";
+  compact?: boolean;
+  className?: string;
+}) {
+  const large = size === "large";
+
+  return (
+    <FrameButton
+      type="button"
+      variant="clay"
+      size={large ? 17 : 13}
+      offset={large ? 7 : 5}
+      className={`${large ? "h-[60px] px-7 text-[16px]" : "h-11 text-[13px]"} ${
+        large ? "" : compact ? "px-3 sm:px-4" : "px-4"
+      } gap-2.5 ${className}`}
+      aria-label={done ? `Practice logged for ${title}` : `Practise ${title}`}
+      disabled={busy}
+      onClick={(e) => {
+        // The card behind this is a link to the song's page; practising is not
+        // the same act as opening it.
+        e.stopPropagation();
+        void onPractise();
+      }}
+    >
+      {busy ? (
+        <Loader2 className={large ? "h-[19px] w-[19px] animate-spin" : "h-4 w-4 animate-spin"} />
+      ) : done ? (
+        <Check className={large ? "h-[19px] w-[19px]" : "h-4 w-4"} strokeWidth={2.25} />
+      ) : (
+        <Piano className={large ? "h-[19px] w-[19px]" : "h-4 w-4"} strokeWidth={1.9} />
+      )}
+      <span className={compact ? "sr-only sm:not-sr-only" : undefined}>
+        {done ? "Logged" : "Practise"}
+      </span>
+    </FrameButton>
+  );
+}
+
 export function PlayControl({
   state,
   title,
   onToggle,
   size = "small",
   compact = false,
+  iconOnly = false,
   className = "",
 }: {
   state: PlayState;
@@ -223,6 +284,9 @@ export function PlayControl({
   onToggle: () => void;
   size?: "small" | "large";
   compact?: boolean;
+  /** Icon alone. On a card where Practise leads, the word is the loser of the
+   *  two and wrapping "PLAY / IT" onto two lines is worse than dropping it. */
+  iconOnly?: boolean;
   className?: string;
 }) {
   const large = size === "large";
@@ -232,11 +296,11 @@ export function PlayControl({
   return (
     <FrameButton
       type="button"
-      variant="clay"
+      variant="paper"
       size={large ? 15 : 13}
       offset={large ? 6 : 5}
       className={`${large ? "h-12 px-6 text-[14px]" : "h-11 text-[13px]"} ${
-        large ? "" : compact ? "px-3 sm:px-4" : "px-4"
+        large ? "" : iconOnly ? "w-11 px-0" : compact ? "px-3 sm:px-4" : "px-4"
       } gap-2.5 ${className}`}
       aria-label={playing ? `Stop ${title}` : `Play ${title}`}
       onClick={(e) => {
@@ -257,7 +321,7 @@ export function PlayControl({
           strokeWidth={0}
         />
       )}
-      <span className={compact ? "sr-only sm:not-sr-only" : undefined}>
+      <span className={iconOnly ? "sr-only" : compact ? "sr-only sm:not-sr-only" : undefined}>
         {playing ? "Stop" : busy ? "Loading" : "Play it"}
       </span>
     </FrameButton>
@@ -272,6 +336,7 @@ export function PlayButton({
   size = "small",
   className = "",
   compact = false,
+  iconOnly = false,
 }: {
   id: string;
   fileUrl: string;
@@ -279,6 +344,7 @@ export function PlayButton({
   size?: "small" | "large";
   className?: string;
   compact?: boolean;
+  iconOnly?: boolean;
 }) {
   const playback = usePlayback(id, fileUrl);
   return (
@@ -288,6 +354,7 @@ export function PlayButton({
       onToggle={playback.toggle}
       size={size}
       compact={compact}
+      iconOnly={iconOnly}
       className={className}
     />
   );

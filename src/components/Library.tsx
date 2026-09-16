@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, LayoutGrid, Rows3, Search, Star, X } from "lucide-react";
-import { FavouriteButton, LevelMarks, PlayButton } from "./kit";
+import { FavouriteButton, LevelMarks, PlayButton, PractiseButton } from "./kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RevealButton } from "@/components/ui/button-6";
@@ -65,7 +65,11 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
   const [onlyFavourites, setOnlyFavourites] = useState(false);
   const [view, setView] = useState<"grid" | "ribbon">("grid");
   const [finishing, setFinishing] = useState(false);
-  const [practising, setPractising] = useState<"idle" | "working" | "done">("idle");
+  // Keyed by piece rather than a single flag: the same act is now offered from
+  // the desk, every card, every row and the shelf, and two of them can be on
+  // screen at once.
+  const [practisingId, setPractisingId] = useState<string | null>(null);
+  const [loggedId, setLoggedId] = useState<string | null>(null);
 
   // Restored after mount rather than during render, so the server and the first
   // client paint agree and nothing flashes the wrong layout.
@@ -228,6 +232,32 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
     if (!res.ok) setPieces((c) => c.map((p) => (p.id === piece.id ? piece : p)));
   }
 
+  /**
+   * Log a session, and put the piece on the desk if it was not already there —
+   * practising something is how it becomes the thing you are working on.
+   *
+   * ponytail: last_practiced_at and session_count are all a button press
+   * honestly knows. practice_seconds stays untouched until something measures
+   * it; a page that insists every number is read from the file cannot start
+   * inventing minutes.
+   */
+  async function practise(piece: Piece) {
+    setPractisingId(piece.id);
+    try {
+      await patch(piece, {
+        last_practiced_at: new Date().toISOString(),
+        session_count: piece.session_count + 1,
+        in_progress: true,
+      });
+      setLoggedId(piece.id);
+      window.setTimeout(() => setLoggedId((id) => (id === piece.id ? null : id)), 1800);
+    } finally {
+      // Cleared on the way out, so a dropped connection cannot leave the
+      // control disabled for the rest of the session.
+      setPractisingId((id) => (id === piece.id ? null : id));
+    }
+  }
+
   function favourite(piece: Piece) {
     return patch(piece, { is_favourite: !piece.is_favourite });
   }
@@ -374,17 +404,29 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                           <Summary piece={current} />
                         </p>
                       </div>
-                      <div className="flex w-full items-center gap-2 md:w-auto md:gap-3">
+                      {/* Buttons here are whitespace-nowrap, so on a narrow
+                          screen they overflow rather than shrink — the tertiary
+                          one ran off the edge. Practise takes a line of its own
+                          below md and the other three share the next. */}
+                      <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap md:gap-3">
+                        <PractiseButton
+                          title={current.title}
+                          onPractise={() => practise(current)}
+                          busy={practisingId === current.id}
+                          done={loggedId === current.id}
+                          size="large"
+                          className="basis-full md:basis-auto"
+                        />
                         <FavouriteButton
                           favourite={current.is_favourite}
                           title={current.title}
                           onToggle={() => favourite(current)}
+                          className="shrink-0"
                         />
                         <PlayButton
                           id={current.id}
                           fileUrl={fileUrl(current)}
                           title={current.title}
-                          size="large"
                           className="min-w-0 flex-1 md:flex-none"
                         />
                         <RevealButton
@@ -411,35 +453,6 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                       <p className="text-[13px] text-graphite-soft">
                         {lastPlayedLine(current.last_practiced_at)}
                       </p>
-                      <div className="flex items-center gap-1.5">
-                        {/* ponytail: logs that a session happened, which is all
-                            the data model honestly knows. A real practice mode —
-                            timer, loop a bar, slow it down — hangs off this
-                            button when it exists; practice_seconds stays
-                            untouched until something actually measures it. */}
-                        <Button
-                          variant="paper"
-                          size="sm"
-                          busy={practising === "working"}
-                          done={practising === "done"}
-                          onClick={async () => {
-                            setPractising("working");
-                            try {
-                              await patch(current, {
-                                last_practiced_at: new Date().toISOString(),
-                                session_count: current.session_count + 1,
-                              });
-                              setPractising("done");
-                              window.setTimeout(() => setPractising("idle"), 1800);
-                            } catch {
-                              // A dropped connection must not leave the control
-                              // disabled for the rest of the session.
-                              setPractising("idle");
-                            }
-                          }}
-                        >
-                          {practising === "done" ? "Logged" : "Practise"}
-                        </Button>
                         <Button
                           variant="quiet"
                           size="sm"
@@ -455,7 +468,6 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                         >
                           Done with this
                         </Button>
-                      </div>
                     </div>
                   </article>
                   </div>
@@ -465,7 +477,13 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
               )}
 
               {picks.length > 0 && (
-                <Shelf picks={picks} onOpen={setOpenId} />
+                <Shelf
+                  picks={picks}
+                  onOpen={setOpenId}
+                  onPractise={practise}
+                  practisingId={practisingId}
+                  loggedId={loggedId}
+                />
               )}
 
               {/* --- the rest of the book --- */}
@@ -571,6 +589,9 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                         index={i}
                         onOpen={(p) => setOpenId(p.id)}
                         onFavourite={favourite}
+                        onPractise={practise}
+                        practising={practisingId === piece.id}
+                        logged={loggedId === piece.id}
                       />
                     ))}
                   </ul>
@@ -583,6 +604,9 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                         index={i}
                         onOpen={(p) => setOpenId(p.id)}
                         onFavourite={favourite}
+                        onPractise={practise}
+                        practising={practisingId === piece.id}
+                        logged={loggedId === piece.id}
                       />
                     ))}
                   </div>
@@ -650,7 +674,19 @@ function ClearDesk() {
  * you cannot interrogate is one you have to take on trust, and nothing else on
  * this page asks you to do that.
  */
-function Shelf({ picks, onOpen }: { picks: Suggestion[]; onOpen: (id: string) => void }) {
+function Shelf({
+  picks,
+  onOpen,
+  onPractise,
+  practisingId,
+  loggedId,
+}: {
+  picks: Suggestion[];
+  onOpen: (id: string) => void;
+  onPractise: (piece: Piece) => void;
+  practisingId: string | null;
+  loggedId: string | null;
+}) {
   return (
     <section className="mb-14">
       <h2 className="kraft mb-4 inline-block rounded-[3px] px-3.5 py-1.5 font-book text-[17px] font-medium text-graphite shadow-lift">
@@ -694,8 +730,14 @@ function Shelf({ picks, onOpen }: { picks: Suggestion[]; onOpen: (id: string) =>
               />
             </div>
 
-            <div className="mt-auto flex items-center gap-3 px-4 pb-4 pt-3">
-              <PlayButton id={piece.id} fileUrl={fileUrl(piece)} title={piece.title} />
+            <div className="mt-auto flex items-center gap-2 px-4 pb-4 pt-3">
+              <PractiseButton
+                title={piece.title}
+                onPractise={() => onPractise(piece)}
+                busy={practisingId === piece.id}
+                done={loggedId === piece.id}
+              />
+              <PlayButton id={piece.id} fileUrl={fileUrl(piece)} title={piece.title} iconOnly />
               <span className="ml-auto flex items-center gap-2 text-[13px] text-graphite-soft">
                 <LevelMarks level={piece.difficulty} />
                 {level(piece.difficulty).name}
