@@ -416,7 +416,13 @@ export function SongSheet({
                   busy={removing}
                   onClick={async () => {
                     setRemoving(true);
-                    await onDelete();
+                    try {
+                      await onDelete();
+                    } finally {
+                      // On success the sheet closes and this never lands; on
+                      // failure the piece comes back and so must the button.
+                      setRemoving(false);
+                    }
                   }}
                 >
                   Yes, remove it
@@ -431,12 +437,16 @@ export function SongSheet({
                 done={marking === "done"}
                 onClick={async () => {
                   setMarking("working");
-                  await onPatch({
-                    last_practiced_at: new Date().toISOString(),
-                    in_progress: true,
-                  });
-                  setMarking("done");
-                  window.setTimeout(() => setMarking("idle"), 1800);
+                  try {
+                    await onPatch({
+                      last_practiced_at: new Date().toISOString(),
+                      in_progress: true,
+                    });
+                    setMarking("done");
+                    window.setTimeout(() => setMarking("idle"), 1800);
+                  } catch {
+                    setMarking("idle");
+                  }
                 }}
               >
                 {marking === "done" ? "Started" : "Practise this"}

@@ -65,6 +65,7 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
   const [onlyFavourites, setOnlyFavourites] = useState(false);
   const [view, setView] = useState<"grid" | "ribbon">("grid");
   const [finishing, setFinishing] = useState(false);
+  const [practising, setPractising] = useState<"idle" | "working" | "done">("idle");
 
   // Restored after mount rather than during render, so the server and the first
   // client paint agree and nothing flashes the wrong layout.
@@ -410,18 +411,51 @@ export function Library({ initial, configured }: { initial: Piece[]; configured:
                       <p className="text-[13px] text-graphite-soft">
                         {lastPlayedLine(current.last_practiced_at)}
                       </p>
-                      <Button
-                        variant="quiet"
-                        size="sm"
-                        busy={finishing}
-                        onClick={async () => {
-                          setFinishing(true);
-                          await patch(current, { in_progress: false });
-                          setFinishing(false);
-                        }}
-                      >
-                        Done with this
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {/* ponytail: logs that a session happened, which is all
+                            the data model honestly knows. A real practice mode —
+                            timer, loop a bar, slow it down — hangs off this
+                            button when it exists; practice_seconds stays
+                            untouched until something actually measures it. */}
+                        <Button
+                          variant="paper"
+                          size="sm"
+                          busy={practising === "working"}
+                          done={practising === "done"}
+                          onClick={async () => {
+                            setPractising("working");
+                            try {
+                              await patch(current, {
+                                last_practiced_at: new Date().toISOString(),
+                                session_count: current.session_count + 1,
+                              });
+                              setPractising("done");
+                              window.setTimeout(() => setPractising("idle"), 1800);
+                            } catch {
+                              // A dropped connection must not leave the control
+                              // disabled for the rest of the session.
+                              setPractising("idle");
+                            }
+                          }}
+                        >
+                          {practising === "done" ? "Logged" : "Practise"}
+                        </Button>
+                        <Button
+                          variant="quiet"
+                          size="sm"
+                          busy={finishing}
+                          onClick={async () => {
+                            setFinishing(true);
+                            try {
+                              await patch(current, { in_progress: false });
+                            } finally {
+                              setFinishing(false);
+                            }
+                          }}
+                        >
+                          Done with this
+                        </Button>
+                      </div>
                     </div>
                   </article>
                   </div>
